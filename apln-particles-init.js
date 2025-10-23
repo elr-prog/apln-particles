@@ -41,7 +41,8 @@
             constructor() {
                 this.x = Math.random() * winW;
                 this.y = Math.random() * winH;
-                this.size = 8;
+                this.width = 14;  // Wider for slanted effect
+                this.height = 8;  // Shorter for slanted effect
                 this.speedX = (Math.random() - 0.5) * 0.7;
                 this.speedY = (Math.random() - 0.5) * 0.7;
                 this.layer = Math.ceil(Math.random() * 3);
@@ -53,13 +54,13 @@
                 const x = this.x + this.parallaxOffsetX;
                 const y = this.y + this.parallaxOffsetY;
                 
-                // Draw rhombus
+                // Draw slanted rhombus (parallelogram shape like APLN logo)
                 ctx.fillStyle = '#d3cfc7';
                 ctx.beginPath();
-                ctx.moveTo(x, y - this.size);
-                ctx.lineTo(x + this.size, y);
-                ctx.lineTo(x, y + this.size);
-                ctx.lineTo(x - this.size, y);
+                ctx.moveTo(x - this.width * 0.3, y - this.height);      // Top left
+                ctx.lineTo(x + this.width * 0.7, y - this.height);      // Top right (slanted)
+                ctx.lineTo(x + this.width * 0.3, y + this.height);      // Bottom right
+                ctx.lineTo(x - this.width * 0.7, y + this.height);      // Bottom left (slanted)
                 ctx.closePath();
                 ctx.fill();
 
