@@ -1,61 +1,134 @@
 /**
- * APLN Particle Animation - Initialization
- * Your finalized settings: Distance 200 | Responsiveness 2.5 | Size 16 | 
+ * APLN Particle Animation - Rhombus/Diamond Shapes
+ * Your settings: Distance 200 | Responsiveness 2.5 | Size 16 
  * Particles 9000 | Line Width 2.5 | Opacity 0.3
  */
 
 (function() {
-    // Wait for DOM to be ready
     function initAPLNParticles() {
-        // Check if particles container exists
-        const particlesContainer = document.getElementById('particles');
-        if (!particlesContainer) {
-            console.warn('APLN Particles: Container #particles not found');
-            return;
-        }
+        const container = document.getElementById('particles');
+        if (!container) return;
 
-        // Check if particleground is loaded
-        if (typeof window.particleground !== 'function') {
-            console.error('APLN Particles: particleground library not loaded');
-            return;
-        }
+        const canvas = document.createElement('canvas');
+        canvas.style.display = 'block';
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        container.appendChild(canvas);
+        
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let mouseX = 0, mouseY = 0;
+        let winW, winH;
 
-        // Your exact finalized settings
-        const settings = {
-            // Movement
-            minSpeedX: 0.1,
-            maxSpeedX: 0.7,
-            minSpeedY: 0.1,
-            maxSpeedY: 0.7,
-            directionX: 'center',
-            directionY: 'center',
+        function resize() {
+            canvas.width = container.offsetWidth;
+            canvas.height = container.offsetHeight;
+            winW = canvas.width;
+            winH = canvas.height;
             
-            // Particles
-            density: 9000,
-            particleRadius: 16,
-            dotColor: '#d3cfc7',
-            
-            // Connections - The key to your connected web!
-            proximity: 200,
-            lineWidth: 2.5,
-            lineColor: 'rgba(185, 174, 161, 0.3)',
-            curvedLines: false,
-            
-            // Mouse interaction - Responsive!
-            parallax: true,
-            parallaxMultiplier: 2.5,
-            
-            // Callbacks
-            onInit: function() {
-                console.log('APLN Particles: Initialized successfully ✓');
+            // Recreate particles on resize
+            const numParticles = Math.round((canvas.width * canvas.height) / 9000);
+            particles = [];
+            for (let i = 0; i < numParticles; i++) {
+                particles.push(new Particle());
             }
-        };
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * winW;
+                this.y = Math.random() * winH;
+                this.size = 8;
+                this.speedX = (Math.random() - 0.5) * 0.7;
+                this.speedY = (Math.random() - 0.5) * 0.7;
+                this.layer = Math.ceil(Math.random() * 3);
+                this.parallaxOffsetX = 0;
+                this.parallaxOffsetY = 0;
+            }
+
+            draw() {
+                const x = this.x + this.parallaxOffsetX;
+                const y = this.y + this.parallaxOffsetY;
+                
+                // Draw rhombus
+                ctx.fillStyle = '#d3cfc7';
+                ctx.beginPath();
+                ctx.moveTo(x, y - this.size);
+                ctx.lineTo(x + this.size, y);
+                ctx.lineTo(x, y + this.size);
+                ctx.lineTo(x - this.size, y);
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw connections
+                ctx.strokeStyle = 'rgba(185, 174, 161, 0.3)';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                
+                for (let i = 0; i < particles.length; i++) {
+                    const p2 = particles[i];
+                    if (p2 === this) continue;
+                    
+                    const dx = this.x - p2.x;
+                    const dy = this.y - p2.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 200) {
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(p2.x + p2.parallaxOffsetX, p2.y + p2.parallaxOffsetY);
+                    }
+                }
+                ctx.stroke();
+            }
+
+            update() {
+                // Parallax
+                const parallaxMultiplier = 2.5;
+                const targetX = (mouseX - winW / 2) / (parallaxMultiplier * this.layer);
+                const targetY = (mouseY - winH / 2) / (parallaxMultiplier * this.layer);
+                this.parallaxOffsetX += (targetX - this.parallaxOffsetX) / 10;
+                this.parallaxOffsetY += (targetY - this.parallaxOffsetY) / 10;
+
+                // Movement
+                if (this.x + this.speedX > winW || this.x + this.speedX < 0) {
+                    this.speedX = -this.speedX;
+                }
+                if (this.y + this.speedY > winH || this.y + this.speedY < 0) {
+                    this.speedY = -this.speedY;
+                }
+                this.x += this.speedX;
+                this.y += this.speedY;
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, winW, winH);
+            
+            for (let particle of particles) {
+                particle.update();
+                particle.draw();
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        // Mouse tracking
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.pageX;
+            mouseY = e.pageY;
+        });
 
         // Initialize
-        window.aplnParticles = window.particleground(particlesContainer, settings);
+        resize();
+        window.addEventListener('resize', resize);
+        animate();
+
+        console.log('APLN Particles: Rhombus shapes initialized ✓');
     }
 
-    // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initAPLNParticles);
     } else {
