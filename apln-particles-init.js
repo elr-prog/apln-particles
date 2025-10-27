@@ -93,15 +93,30 @@
                 this.parallaxOffsetX += (targetX - this.parallaxOffsetX) / 10;
                 this.parallaxOffsetY += (targetY - this.parallaxOffsetY) / 10;
 
-                // Movement
-                if (this.x + this.speedX > winW || this.x + this.speedX < 0) {
-                    this.speedX = -this.speedX;
-                }
-                if (this.y + this.speedY > winH || this.y + this.speedY < 0) {
-                    this.speedY = -this.speedY;
-                }
+                // Movement with padding to keep shapes fully inside
+                const padding = this.width;
+                
+                // Update position
                 this.x += this.speedX;
                 this.y += this.speedY;
+                
+                // Bounce off edges with padding
+                if (this.x > winW - padding) {
+                    this.x = winW - padding;
+                    this.speedX = -this.speedX;
+                }
+                if (this.x < padding) {
+                    this.x = padding;
+                    this.speedX = -this.speedX;
+                }
+                if (this.y > winH - padding) {
+                    this.y = winH - padding;
+                    this.speedY = -this.speedY;
+                }
+                if (this.y < padding) {
+                    this.y = padding;
+                    this.speedY = -this.speedY;
+                }
             }
         }
 
