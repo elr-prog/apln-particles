@@ -1,36 +1,43 @@
 /**
- * APLN Particle Animation - Rhombus/Diamond Shapes
- * Your settings: Distance 200 | Responsiveness 2.5 | Size 16 
- * Particles 9000 | Line Width 2.5 | Opacity 0.3
+ * APLN Particle Animation - Zoomed Network Version
+ * Particles extend beyond visible bounds for "zoomed into larger network" effect
+ * Settings: Density 12000 | Responsiveness 2.5 | Distance 200
+ * Shape: Wide rhombus matching APLN logo (20×8 with slant)
  */
 
 (function() {
     function initAPLNParticles() {
         const container = document.getElementById('particles');
-        if (!container) return;
+        if (!container) {
+            console.warn('APLN Particles: Container #particles not found');
+            return;
+        }
 
         const canvas = document.createElement('canvas');
         canvas.style.display = 'block';
         canvas.style.position = 'absolute';
         canvas.style.top = '0';
         canvas.style.left = '0';
-        canvas.style.width = '100%';
-        canvas.style.height = '100%';
         container.appendChild(canvas);
         
         const ctx = canvas.getContext('2d');
         let particles = [];
         let mouseX = 0, mouseY = 0;
-        let winW, winH;
+        let visibleWidth, visibleHeight;
 
         function resize() {
-            canvas.width = container.offsetWidth;
-            canvas.height = container.offsetHeight;
-            winW = canvas.width;
-            winH = canvas.height;
+            const rect = container.getBoundingClientRect();
+            visibleWidth = rect.width;
+            visibleHeight = rect.height;
             
-            // Recreate particles on resize
-            const numParticles = Math.round((canvas.width * canvas.height) / 9000);
+            // Canvas extends 50% beyond visible area on all sides (zoomed effect)
+            canvas.width = visibleWidth * 2;
+            canvas.height = visibleHeight * 2;
+            canvas.style.left = `-${visibleWidth * 0.5}px`;
+            canvas.style.top = `-${visibleHeight * 0.5}px`;
+            
+            // Recreate particles
+            const numParticles = Math.round((canvas.width * canvas.height) / 12000);
             particles = [];
             for (let i = 0; i < numParticles; i++) {
                 particles.push(new Particle());
@@ -39,10 +46,11 @@
 
         class Particle {
             constructor() {
-                this.x = Math.random() * winW;
-                this.y = Math.random() * winH;
-                this.width = 14;  // Wider for slanted effect
-                this.height = 8;  // Shorter for slanted effect
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.width = 20;   // Wider to match APLN logo
+                this.height = 8;   // Shorter - wider than tall
+                this.slant = 7;    // Slant angle
                 this.speedX = (Math.random() - 0.5) * 0.7;
                 this.speedY = (Math.random() - 0.5) * 0.7;
                 this.layer = Math.ceil(Math.random() * 3);
@@ -54,13 +62,24 @@
                 const x = this.x + this.parallaxOffsetX;
                 const y = this.y + this.parallaxOffsetY;
                 
-                // Draw slanted rhombus (parallelogram shape like APLN logo)
+                // Skip if too far outside visible area (performance)
+                const margin = 100;
+                const visibleLeft = visibleWidth * 0.5 - margin;
+                const visibleRight = visibleWidth * 1.5 + margin;
+                const visibleTop = visibleHeight * 0.5 - margin;
+                const visibleBottom = visibleHeight * 1.5 + margin;
+                
+                if (x < visibleLeft || x > visibleRight || y < visibleTop || y > visibleBottom) {
+                    return;
+                }
+                
+                // Draw wide parallelogram matching APLN logo
                 ctx.fillStyle = '#d3cfc7';
                 ctx.beginPath();
-                ctx.moveTo(x - this.width * 0.3, y - this.height);      // Top left
-                ctx.lineTo(x + this.width * 0.7, y - this.height);      // Top right (slanted)
-                ctx.lineTo(x + this.width * 0.3, y + this.height);      // Bottom right
-                ctx.lineTo(x - this.width * 0.7, y + this.height);      // Bottom left (slanted)
+                ctx.moveTo(x - this.width/2 + this.slant, y - this.height);
+                ctx.lineTo(x + this.width/2 + this.slant, y - this.height);
+                ctx.lineTo(x + this.width/2 - this.slant, y + this.height);
+                ctx.lineTo(x - this.width/2 - this.slant, y + this.height);
                 ctx.closePath();
                 ctx.fill();
 
@@ -88,40 +107,28 @@
             update() {
                 // Parallax
                 const parallaxMultiplier = 2.5;
-                const targetX = (mouseX - winW / 2) / (parallaxMultiplier * this.layer);
-                const targetY = (mouseY - winH / 2) / (parallaxMultiplier * this.layer);
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const targetX = (mouseX - centerX) / (parallaxMultiplier * this.layer);
+                const targetY = (mouseY - centerY) / (parallaxMultiplier * this.layer);
                 this.parallaxOffsetX += (targetX - this.parallaxOffsetX) / 10;
                 this.parallaxOffsetY += (targetY - this.parallaxOffsetY) / 10;
 
-                // Movement with padding to keep shapes fully inside
-                const padding = this.width;
-                
-                // Update position
+                // Movement
                 this.x += this.speedX;
                 this.y += this.speedY;
                 
-                // Bounce off edges with padding
-                if (this.x > winW - padding) {
-                    this.x = winW - padding;
-                    this.speedX = -this.speedX;
-                }
-                if (this.x < padding) {
-                    this.x = padding;
-                    this.speedX = -this.speedX;
-                }
-                if (this.y > winH - padding) {
-                    this.y = winH - padding;
-                    this.speedY = -this.speedY;
-                }
-                if (this.y < padding) {
-                    this.y = padding;
-                    this.speedY = -this.speedY;
-                }
+                // Wrap around edges (particles flow in/out)
+                const padding = this.width;
+                if (this.x > canvas.width - padding) this.x = padding;
+                if (this.x < padding) this.x = canvas.width - padding;
+                if (this.y > canvas.height - padding) this.y = padding;
+                if (this.y < padding) this.y = canvas.height - padding;
             }
         }
 
         function animate() {
-            ctx.clearRect(0, 0, winW, winH);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             for (let particle of particles) {
                 particle.update();
@@ -132,9 +139,10 @@
         }
 
         // Mouse tracking
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.pageX;
-            mouseY = e.pageY;
+        container.addEventListener('mousemove', (e) => {
+            const rect = container.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
         });
 
         // Initialize
@@ -142,7 +150,7 @@
         window.addEventListener('resize', resize);
         animate();
 
-        console.log('APLN Particles: Rhombus shapes initialized ✓');
+        console.log('APLN Particles: Zoomed network initialized ✓');
     }
 
     if (document.readyState === 'loading') {
