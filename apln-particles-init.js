@@ -3,6 +3,7 @@
  * Particles extend beyond visible bounds for "zoomed into larger network" effect
  * Settings: Density 12000 | Responsiveness 2.5 | Distance 200
  * Shape: Wide rhombus matching APLN logo (20×8 with slant)
+ * Updated: Full opacity, matching tan color (#b9aea1), no mouse interaction
  */
 
 (function() {
@@ -22,7 +23,6 @@
         
         const ctx = canvas.getContext('2d');
         let particles = [];
-        let mouseX = 0, mouseY = 0;
         let visibleWidth, visibleHeight;
 
         function resize() {
@@ -48,19 +48,16 @@
             constructor() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
-                this.width = 20;   // Wider to match APLN logo
-                this.height = 8;   // Shorter - wider than tall
-                this.slant = 7;    // Slant angle
+                this.width = 20;
+                this.height = 8;
+                this.slant = 7;
                 this.speedX = (Math.random() - 0.5) * 0.7;
                 this.speedY = (Math.random() - 0.5) * 0.7;
-                this.layer = Math.ceil(Math.random() * 3);
-                this.parallaxOffsetX = 0;
-                this.parallaxOffsetY = 0;
             }
 
             draw() {
-                const x = this.x + this.parallaxOffsetX;
-                const y = this.y + this.parallaxOffsetY;
+                const x = this.x;
+                const y = this.y;
                 
                 // Skip if too far outside visible area (performance)
                 const margin = 100;
@@ -73,8 +70,8 @@
                     return;
                 }
                 
-                // Draw wide parallelogram matching APLN logo
-                ctx.fillStyle = '#d3cfc7';
+                // Draw wide parallelogram - same tan as lines
+                ctx.fillStyle = '#b9aea1';
                 ctx.beginPath();
                 ctx.moveTo(x - this.width/2 + this.slant, y - this.height);
                 ctx.lineTo(x + this.width/2 + this.slant, y - this.height);
@@ -83,8 +80,8 @@
                 ctx.closePath();
                 ctx.fill();
 
-                // Draw connections
-                ctx.strokeStyle = 'rgba(185, 174, 161, 0.3)';
+                // Draw connections - same tan
+                ctx.strokeStyle = '#b9aea1';
                 ctx.lineWidth = 2.5;
                 ctx.beginPath();
                 
@@ -98,27 +95,18 @@
                     
                     if (dist < 200) {
                         ctx.moveTo(x, y);
-                        ctx.lineTo(p2.x + p2.parallaxOffsetX, p2.y + p2.parallaxOffsetY);
+                        ctx.lineTo(p2.x, p2.y);
                     }
                 }
                 ctx.stroke();
             }
 
             update() {
-                // Parallax
-                const parallaxMultiplier = 2.5;
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height / 2;
-                const targetX = (mouseX - centerX) / (parallaxMultiplier * this.layer);
-                const targetY = (mouseY - centerY) / (parallaxMultiplier * this.layer);
-                this.parallaxOffsetX += (targetX - this.parallaxOffsetX) / 10;
-                this.parallaxOffsetY += (targetY - this.parallaxOffsetY) / 10;
-
-                // Movement
+                // Movement only
                 this.x += this.speedX;
                 this.y += this.speedY;
                 
-                // Wrap around edges (particles flow in/out)
+                // Wrap around edges
                 const padding = this.width;
                 if (this.x > canvas.width - padding) this.x = padding;
                 if (this.x < padding) this.x = canvas.width - padding;
@@ -137,13 +125,6 @@
             
             requestAnimationFrame(animate);
         }
-
-        // Mouse tracking
-        container.addEventListener('mousemove', (e) => {
-            const rect = container.getBoundingClientRect();
-            mouseX = e.clientX - rect.left;
-            mouseY = e.clientY - rect.top;
-        });
 
         // Initialize
         resize();
