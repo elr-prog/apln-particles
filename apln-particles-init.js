@@ -51,8 +51,8 @@
                 this.width = 20;
                 this.height = 8;
                 this.slant = 7;
-                this.speedX = (Math.random() - 0.5) * 0.7;
-                this.speedY = (Math.random() - 0.5) * 0.7;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
             }
 
             draw() {
